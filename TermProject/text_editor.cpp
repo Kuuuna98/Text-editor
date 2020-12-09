@@ -40,8 +40,6 @@ private:
 
 };
 
-
-
 class TextEditor {
 
 private:
@@ -59,19 +57,33 @@ public:
 
 	void run() {
 		int execute = 1;
+		std::string consol_msg = "";
 		while (execute) {
-			execute = call();
+			try {
+				execute = call(consol_msg);
+				consol_msg = "";
+			}
+			catch (std::string s) {
+				consol_msg = s;
+			}
+			catch (...) {
+				consol_msg = "오잉";
+			}
 		}
 	}
 
-	int call(std::string consol = "") {
-		std::string answer = menu(consol);
-		int idx = 0;
+	int call(std::string consol_msg = "") {
+		std::string answer = menu(consol_msg);
+		if (answer.size() < 1) throw std::string("Invalid input");
 
-		switch (answer.front()) {
+		int idx = 0;
+		std::vector<std::string> answer_split = keyword_check(answer);
+
+		switch (answer.front())
+		{
 		case 'n':
 			if (page_idx[now_page_idx + 1] >= textbook->text.size()) {  //RE
-				call("This is the last page!");
+				throw std::string("This is the last page!");
 			}
 			else {
 				now_page_idx++;
@@ -89,79 +101,24 @@ public:
 				print_text(textbook->text, page_idx[now_page_idx]);
 			}
 			break;
-		case 'i':
-			insertWord(1, 10, "hello");
-			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
-			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
-			break;
-		case 'd':
-			eraseWord(2, 10);
-			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
-			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
-			break;
-		case 'c':
-			changeWord("hello", "bye");
-			now_page_idx = 0;
-			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
-			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+
+		case 't':
 			break;
 		case 's':
-			idx = searchWord("hello");
-			if (idx >= textbook->text.size()) {
-				call("No words are found in the text.");
-			}
-			else {
-				now_page_idx = 1;
-				page_idx.clear();
-				page_idx.push_back(-1);
-				page_idx.push_back(idx);
-				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
-			}
 			break;
-		case 't':
-			fileWrite();
-			return 0;
+
+		case 'd':
+			break;
+
+		case 'i':
+			break;
+
 		default:
 			break;
 		}
 		return 1;
 	}
 
-	//삭제 예정
-/*
-int print_text1(std::vector<std::string> text, int now) {
-	std::vector<int> line_idx_temp;
-	int page_total = 1;
-	int line_char_total = 0;
-	int line_num = 0;
-
-
-	//line_idx_temp.push_back(now);
-	//line_char_total = text[now].size();
-
-	//std::cout << ' ' << line_num++ << "| " << text[i++];
-
-	for (int i = now; i < text.size() && line_num <= 20; i++) {
-
-		if (line_char_total==0 || line_char_total + 1 + text[i].size() > 75) { //next line
-
-			if (++line_num > 20) {
-				break;
-			}
-			line_idx_temp.push_back(i);
-			if (line_num < 10) std::cout << std::endl << ' ' << line_num << "|";
-			else std::cout << std::endl << line_num << "|";
-			line_char_total = text[i].size();
-		}
-		else {
-			line_char_total += 1 + text[i].size();
-		}
-		std::cout << ' ' << text[i];
-	}
-
-	return now;
-}
-*/
 
 	int print_text(std::vector<std::string> text, int now) {
 
@@ -194,6 +151,8 @@ int print_text1(std::vector<std::string> text, int now) {
 			}
 			std::cout << ' ' << text[i];
 		}
+
+		std::cout << std::endl << "----------------------------------------------------------------------------------";
 
 		return line_idx[20];
 	}
@@ -266,8 +225,168 @@ int print_text1(std::vector<std::string> text, int now) {
 
 private:
 
+	std::string getInvalidInputMSG(bool follow, char keyword) {
+		std::string msg = "Invalid input: The '";
+		msg += keyword;
+
+		if (follow) msg += "' keyword can be followed by anything word.";
+		else msg += "' keyword cannot be followed by anything word.";
+
+		return msg;
+	}
+
+	std::vector<std::string> keyword_check(std::string answer) {
+
+		char keyword(answer.front());
+		std::string message = "";
+		std::vector<std::string> answer_split;
+		std::string word = "";
+		bool front_parentheses = false, back_parentheses = false;
+
+		switch (keyword)
+		{
+		case 'n':
+		case 'p':
+		case 't':
+
+			if (answer.size() > 1) throw std::string(getInvalidInputMSG(false, keyword));
+
+			answer_split.push_back("" + keyword);
+			return answer_split;
+
+		case 's':
+			if (answer.size() == 1) throw std::string(getInvalidInputMSG(true, keyword));
+
+			for (int i = 1; i < answer.size(); i++) {
+				if (answer.at(i) == ' ') {
+					if (front_parentheses && !back_parentheses) throw std::string("Invalid input: There should be no spaces in parentheses.");
+				}
+				else if (answer.at(i) == '(') {
+					if (front_parentheses) word += '(';
+					front_parentheses = true;
+				}
+				else if (answer.at(i) == ')') {
+					if (back_parentheses) word += ')';
+					back_parentheses = true;
+				}
+				else {
+					if (back_parentheses) word += ')';
+					back_parentheses = false;
+					word += answer.at(i);
+				}
+			}
+			if (!back_parentheses) throw std::string("Invalid input");
+
+			answer_split.push_back(word);
+			return answer_split;
+
+		case 'c':
+			if (answer.size() == 1) throw std::string(getInvalidInputMSG(true, keyword));
+
+
+			for (int i = 1; i < answer.size(); i++) {
+				if (answer.at(i) == ' ') {
+					if (front_parentheses && !back_parentheses) throw std::string("Invalid input: There should be no spaces in parentheses.");
+				}
+				else if (answer.at(i) == ',') {
+					answer_split.push_back(word);
+					word = "";
+					if (answer_split.size() > 1) throw std::string("Invalid input");
+				}
+				else {
+					if (answer.at(i) == '(') {
+						if (front_parentheses) word += '(';
+						front_parentheses = true;
+					}
+					else if (answer.at(i) == ')') {
+						if (back_parentheses) word += ')';
+						back_parentheses = true;
+					}
+					else {
+						if (back_parentheses) word += ')';
+						back_parentheses = false;
+						word += answer.at(i);
+					}
+				}
+			}
+			answer_split.push_back(word);
+			if (!back_parentheses || answer_split.size() < 2) throw std::string("Invalid input");
+			return answer_split;
+
+		case 'd':
+			if (answer.size() == 1) throw std::string(getInvalidInputMSG(true, keyword));
+
+			for (int i = 1; i < answer.size(); i++) {
+				if (answer.at(i) == ' ') {
+					if (front_parentheses && !back_parentheses) throw std::string("Invalid input: There should be no spaces in parentheses.");
+				}
+				else if (answer.at(i) == ',') {
+					answer_split.push_back(word);
+					word = "";
+					if (answer_split.size() > 1) throw std::string("Invalid input");
+				}
+				else {
+					if (answer.at(i) == '(') {
+						if (front_parentheses) throw std::string("Invalid input");
+						front_parentheses = true;
+					}
+					else if (answer.at(i) == ')') {
+						if (back_parentheses) throw std::string("Invalid input");
+						back_parentheses = true;
+					}
+					else {
+						if (back_parentheses) throw std::string("Invalid input");
+						if (answer.at(i) < 48 || answer.at(i) > 57) throw std::string("Invalid input: Keyword 'd' must only enter numbers for the argument.");
+						word += answer.at(i);
+					}
+				}
+			}
+			answer_split.push_back(word);
+			if (!back_parentheses || answer_split.size() < 2) throw std::string("Invalid input");
+			return answer_split;
+
+		case 'i':
+			if (answer.size() == 1) throw std::string(getInvalidInputMSG(true, keyword));
+
+			for (int i = 1; i < answer.size(); i++) {
+				if (answer.at(i) == ' ') {
+					if (front_parentheses && !back_parentheses) throw std::string("Invalid input: There should be no spaces in parentheses.");
+				}
+				else if (answer.at(i) == ',') {
+					//if(answer_split.size()==1 && word) //숫자 변환
+					answer_split.push_back(word);
+					word = "";
+					if (answer_split.size() > 2) throw std::string("Invalid input");
+				}
+				else {
+					if (answer.at(i) == '(') {
+						if (front_parentheses) throw std::string("Invalid input");
+						front_parentheses = true;
+					}
+					else if (answer.at(i) == ')') {
+						if (back_parentheses) throw std::string("Invalid input");
+						back_parentheses = true;
+					}
+					else {
+						if (back_parentheses) throw std::string("Invalid input");
+						//if (answer.at(i) > 47 && answer.at(i) < 58) throw std::string("Invalid input: Keyword 'd' must only enter numbers for the argument.");
+						word += answer.at(i);
+					}
+				}
+			}
+			answer_split.push_back(word);
+			if (!back_parentheses || answer_split.size() < 3) throw std::string("Invalid input");
+			return answer_split;
+		default:
+			throw std::string("Invalid input");
+		}
+	}
+
 	void insertWord(int line, int idx, std::string word) {
+
+
 		textbook->text.insert(textbook->text.begin() + line_idx[line - 1] + (idx - 1), word);
+
 	}
 
 	void eraseWord(int line, int idx) {
@@ -296,42 +415,31 @@ private:
 	}
 
 	void fileWrite() { //구현
-		//std::ofstream writeFile;            //쓸 목적의 파일 선언
-		//writeFile.open("test2.txt");    //파일 열기
+		std::ofstream out("test2.txt");            //쓸 목적의 파일 선언 // 리셋 후 다시 쓰기 RERERER
 		//char arr[11] = "BlockDMask";        //파일에 쓸 문자열
-
-
-
-		//if (writeFile.is_open())    //파일이 열렸는지 확인
-
-		//{
-
-		//	writeFile.write(arr, 10);    //파일에 문자열 쓰기
-
-		//}
-
-		//writeFile.close();
+		if (out.is_open()) {
+			//	writeFile.write(arr, 10);    //파일에 문자열 쓰기
+		}
+		out.close();
 	}
 
 	std::string menu(std::string consol) {
 		std::string answer;
 
-		std::cout << std::endl << "----------------------------------------------------------------------------------" << std::endl;
-		std::cout << "n:다음페이지, p:이전페이지, i:삽입, d:삭제, c:변경, s:찾기, t:저장후종료" << std::endl;
+		std::cout << std::endl << "n:다음페이지, p:이전페이지, i:삽입, d:삭제, c:변경, s:찾기, t:저장후종료" << std::endl;
 		std::cout << "----------------------------------------------------------------------------------" << std::endl;
-		std::cout << "(콘솔 메세지)" << consol << std::endl;
+		std::cout << "(콘솔 메세지) " << consol << std::endl;
 		std::cout << "----------------------------------------------------------------------------------" << std::endl;
 		std::cout << "입력: ";
 
-		std::cin >> answer;
+		//std::cin >> answer;
+		getline(std::cin, answer);
 		std::cout << "----------------------------------------------------------------------------------";
 
-		std::cin.get();
 
 		return answer;
 	}
 };
-
 
 int main() {
 
