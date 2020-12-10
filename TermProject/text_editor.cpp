@@ -67,22 +67,25 @@ public:
 				consol_msg = s;
 			}
 			catch (...) {
-				consol_msg = "오잉";
+				consol_msg = "Error";
 			}
 		}
 	}
-
+	/*
+	 * 1. 삽입 후 삭제 후 p
+	 */
 	int call(std::string consol_msg = "") {
 		std::string answer = menu(consol_msg);
 		if (answer.size() < 1) throw std::string("Invalid input");
 
-		int idx = 0;
+		int idx = 0, line_num = 0, sequence_num=0;
 		std::vector<std::string> answer_split = keyword_check(answer);
 
 		switch (answer.front())
 		{
 		case 'n':
-			if (page_idx[now_page_idx + 1] >= textbook->text.size()) {  //RE
+			/*last page에서 p동작 원하는 결과로 동작 안함*/
+			if (page_idx[now_page_idx + 1] >= textbook->text.size()) {
 				throw std::string("This is the last page!");
 			}
 			else {
@@ -102,16 +105,72 @@ public:
 			}
 			break;
 
-		case 't':
-			break;
+		case 't': //Done
+		{
+			fileWrite();
+			return 0;
+		}
 		case 's':
+			/*search 후 next는 성공 p는 오류 확인하기*/
+			if (answer_split[0].size() > 75) throw std::string("단어 75");  //RERE
+
+			idx = searchWord(answer_split[0]);
+
+			if (idx >= textbook->text.size()) {
+				throw std::string("No words are found in the text.");
+			}
+			else {
+				now_page_idx = 1;
+				page_idx.clear();
+				page_idx.push_back(-1);
+				page_idx.push_back(idx);
+				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+			}
 			break;
 
-		case 'd':
-			break;
+		case 'd': //Done
+			/*글자 다 삭제했을때 반응*/
+		{
+			line_num = std::stoi(answer_split[0]);
+			sequence_num = std::stoi(answer_split[1]);
 
-		case 'i':
+			if (line_num < 1 || line_num > 20) throw std::string("라인 20");  //RERE
+			if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] < sequence_num) throw std::string("단어 인덱스 초과");  //RERE
+
+			eraseWord(line_num, sequence_num);
+			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
+			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
 			break;
+		}
+		case 'c': //Done
+		{
+			if (answer_split[0].size() > 75 || answer_split[1].size() > 75) throw std::string("단어 75");  //RERE
+
+			idx = searchWord(answer_split[0]);
+			if (idx >= textbook->text.size()) {
+				throw std::string("No words are found in the text.");
+			}
+
+			changeWord(answer_split[0], answer_split[1]);
+			now_page_idx = 0;
+			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
+			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+			break;
+		}
+		case 'i'://Done
+	
+		{
+			line_num = std::stoi(answer_split[0]);
+			sequence_num = std::stoi(answer_split[1]);
+
+			if (line_num < 1 || line_num > 20) throw std::string("라인 20");  //RERE
+			if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] + 1 < sequence_num) throw std::string("단어 인덱스 초과");  //RERE
+			if (answer_split[2].size() > 75)throw std::string("단어 75");  //RERE
+			insertWord(line_num, sequence_num, answer_split[2]);
+			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
+			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+			break;
+		}
 
 		default:
 			break;
@@ -353,7 +412,6 @@ private:
 					if (front_parentheses && !back_parentheses) throw std::string("Invalid input: There should be no spaces in parentheses.");
 				}
 				else if (answer.at(i) == ',') {
-					//if(answer_split.size()==1 && word) //숫자 변환
 					answer_split.push_back(word);
 					word = "";
 					if (answer_split.size() > 2) throw std::string("Invalid input");
@@ -369,7 +427,7 @@ private:
 					}
 					else {
 						if (back_parentheses) throw std::string("Invalid input");
-						//if (answer.at(i) > 47 && answer.at(i) < 58) throw std::string("Invalid input: Keyword 'd' must only enter numbers for the argument.");
+						if (answer_split.size() < 2 && (answer.at(i) < 48 || answer.at(i) > 57)) throw std::string("Invalid input: Keyword 'i'의 첫번째 두번째 인자는 숫자여야 합니다.");
 						word += answer.at(i);
 					}
 				}
@@ -383,10 +441,7 @@ private:
 	}
 
 	void insertWord(int line, int idx, std::string word) {
-
-
 		textbook->text.insert(textbook->text.begin() + line_idx[line - 1] + (idx - 1), word);
-
 	}
 
 	void eraseWord(int line, int idx) {
@@ -414,12 +469,18 @@ private:
 		return i;
 	}
 
-	void fileWrite() { //구현
-		std::ofstream out("test2.txt");            //쓸 목적의 파일 선언 // 리셋 후 다시 쓰기 RERERER
-		//char arr[11] = "BlockDMask";        //파일에 쓸 문자열
-		if (out.is_open()) {
-			//	writeFile.write(arr, 10);    //파일에 문자열 쓰기
+	void fileWrite() { 
+		std::string text_file = "";
+
+		for (auto vec : textbook->text) {
+			text_file += vec + " ";
 		}
+		std::ofstream out("test2.txt");           
+
+		if (out.is_open()) {
+			out.write(text_file.c_str(), text_file.size());
+		}
+
 		out.close();
 	}
 
