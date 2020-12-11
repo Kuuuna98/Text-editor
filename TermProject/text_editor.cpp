@@ -73,7 +73,9 @@ public:
 	}
 	/*
 	 * 1. 삽입 후 삭제 후 p
+	 * 2. 원래가 20line이 안될때
 	 */
+
 	int call(std::string consol_msg = "") {
 		std::string answer = menu(consol_msg);
 		if (answer.size() < 1) throw std::string("Invalid input");
@@ -84,7 +86,7 @@ public:
 		switch (answer.front())
 		{
 		case 'n':
-			/*last page에서 p동작 원하는 결과로 동작 안함*/
+
 			if (page_idx[now_page_idx + 1] >= textbook->text.size()) {
 				throw std::string("This is the last page!");
 			}
@@ -92,6 +94,15 @@ public:
 				now_page_idx++;
 				if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
 				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+
+				if (page_idx[now_page_idx + 1] >= textbook->text.size()) {
+
+					page_idx.erase(page_idx.begin() + now_page_idx);
+					page_idx.insert(page_idx.begin() + now_page_idx, line_idx[0]);
+					page_idx.insert(page_idx.begin() + now_page_idx, -1);
+					now_page_idx++;
+
+				}
 			}
 			break;
 
@@ -184,20 +195,26 @@ public:
 		int line_num = 0;
 
 		if (now == -1) {
-			line_idx = check_prevline_idx(text, page_idx[now_page_idx - 1]);
-			if (line_idx[0] == 0) {
-				page_idx.erase(page_idx.begin() + now_page_idx);
+
+			if (page_idx[now_page_idx - 1] == 0) {
 				now_page_idx = 0;
-				now = line_idx[0];
+
+				page_idx.clear();
+				line_idx = check_nextline_idx(text, 0);
+				page_idx.push_back(0);
+				page_idx.insert(page_idx.begin() + now_page_idx + 1, check_nextline_idx(text, 0)[20]);
+
 			}
 			else {
+				line_idx = check_prevline_idx(text, page_idx[now_page_idx - 2], page_idx[now_page_idx - 1], page_idx[now_page_idx + 1]);
 				page_idx.insert(page_idx.begin() + now_page_idx + 1, line_idx[0]);
-				now_page_idx++;
-				now = line_idx[0];
+				page_idx.erase(page_idx.begin() + now_page_idx - 1);
 			}
+
 		}
 		else {
 			line_idx = check_nextline_idx(text, now);
+
 		}
 
 		for (int i = line_idx[0]; i < text.size() && line_num <= 20; i++) {
@@ -216,33 +233,27 @@ public:
 		return line_idx[20];
 	}
 
-	std::vector<int> check_prevline_idx(std::vector<std::string> text, int now) {
-		std::vector<int> line_idx_temp;
-		int page_total = 1;
-		int line_char_total = 0;
-		int i = now;
+	std::vector<int> check_prevline_idx(std::vector<std::string> text, int prev_line_before_change, int now_line_before_change, int next_line_after_change) {
+		
+		std::vector<int> line_idx_temp = check_nextline_idx(text, now_line_before_change);
+		std::vector<int> prev_line_idx_temp = check_nextline_idx(text, prev_line_before_change);
 
-		for (; i >= 0 && line_idx_temp.size() <= 20; i--) {
 
-			if (line_char_total + 1 + text[i].size() > 75) { //prev line
+		int i = 0;
 
-				if (line_idx_temp.size() == 20) {
-					break;
-				}
-
-				line_char_total = text[i].size();
-				line_idx_temp.insert(line_idx_temp.begin(), i);
-			}
-			else {
-				line_char_total += 1 + text[i].size();
-			}
-
+		for (; i < 20; i++) {
+			if (line_idx_temp[i] == next_line_after_change) break;
 		}
 
-		if (line_idx_temp.size() < 20) {
-			return check_nextline_idx(text, 0);
+		line_idx_temp.pop_back();
+		for (int j = 19; j >= i; j--) {
+			line_idx_temp.insert(line_idx_temp.begin(), prev_line_idx_temp[j]);
+			line_idx_temp.pop_back();
 		}
-		line_idx_temp.push_back(0);
+
+		line_idx_temp.push_back(next_line_after_change);
+
+
 
 		return line_idx_temp;
 	}
@@ -278,6 +289,8 @@ public:
 			}
 		}
 		line_idx_temp.push_back(i);
+
+
 
 		return line_idx_temp;
 	}
