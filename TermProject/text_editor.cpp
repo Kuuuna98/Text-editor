@@ -51,8 +51,9 @@ private:
 public:
 	TextEditor(TextBook* textbook) :now_page_idx(0) {
 		this->textbook = textbook;
+
 		page_idx.push_back(0);
-		page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, now_page_idx));
+		if (textbook->text.size() > 0) page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, now_page_idx));
 	}
 
 	void run() {
@@ -60,6 +61,7 @@ public:
 		std::string consol_msg = "";
 		while (execute) {
 			try {
+				if(textbook->text.size() == 0) consol_msg = "텍스트에 내용없음";
 				execute = call(consol_msg);
 				consol_msg = "";
 			}
@@ -86,66 +88,110 @@ public:
 		switch (answer.front())
 		{
 		case 'n':
+		{
+			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
+			if (page_idx[now_page_idx + 1] >= textbook->text.size()) throw std::string("This is the last page!");
+		
+			now_page_idx++;
+			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
+			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
 
 			if (page_idx[now_page_idx + 1] >= textbook->text.size()) {
-				throw std::string("This is the last page!");
-			}
-			else {
+
+				page_idx.erase(page_idx.begin() + now_page_idx);
+				page_idx.insert(page_idx.begin() + now_page_idx, line_idx[0]);
+				page_idx.insert(page_idx.begin() + now_page_idx, -1);
 				now_page_idx++;
-				if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
-				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
 
-				if (page_idx[now_page_idx + 1] >= textbook->text.size()) {
-
-					page_idx.erase(page_idx.begin() + now_page_idx);
-					page_idx.insert(page_idx.begin() + now_page_idx, line_idx[0]);
-					page_idx.insert(page_idx.begin() + now_page_idx, -1);
-					now_page_idx++;
-
-				}
 			}
-			break;
+		
+		break; }
+			
 
 		case 'p':
+		{	
+			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
+
 			if (page_idx[now_page_idx] == 0) {
-				call("This is the first page!");
-			}
-			else {
-				now_page_idx--;
-				print_text(textbook->text, page_idx[now_page_idx]);
-			}
-			break;
+			call("This is the first page!");
+		}
+		else {
+			now_page_idx--;
+			print_text(textbook->text, page_idx[now_page_idx]);
+		}
+		break; }
 
 		case 't': //Done
 		{
 			fileWrite();
 			return 0;
 		}
-		case 's':
-			/*search 후 next는 성공 p는 오류 확인하기*/
+		case 's': //첫장만 있을 경우 연속 오류
+		{	
+
+			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
 			if (answer_split[0].size() > 75) throw std::string("단어 75");  //RERE
 
-			idx = searchWord(answer_split[0]);
+		idx = searchWord(answer_split[0]);
 
-			if (idx >= textbook->text.size()) {
-				throw std::string("No words are found in the text.");
+		if (idx >= textbook->text.size()) {
+			throw std::string("No words are found in the text.");
+		}
+		else {
+			//RERE
+			int i = 0;
+
+			page_idx.clear();
+			page_idx.push_back(0);
+			now_page_idx=0;
+
+			if (idx == 0) {
+				page_idx.push_back(print_text(textbook->text, idx));
+				break;
+			}
+			
+			while(now_page_idx < idx) {
+				set_page_and_line(textbook->text, page_idx[now_page_idx]);
+				now_page_idx = line_idx[line_idx.size() - 1];
+				page_idx.push_back(now_page_idx);
+			}
+
+
+			for (i = 0; i < page_idx.size(); i++) {
+				if (idx == page_idx[i]) {
+					break;
+				}
+				else if (idx < page_idx[i]) {
+					i--;
+					break;
+				}
+			}
+
+			while (i + 1 < page_idx.size()) {
+				page_idx.pop_back();
+			}
+
+			if (idx == page_idx[i]) {
+				now_page_idx = i;
 			}
 			else {
-				now_page_idx = 1;
-				page_idx.clear();
 				page_idx.push_back(-1);
 				page_idx.push_back(idx);
-				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+				page_idx.push_back(print_text(textbook->text, idx));
+				now_page_idx = 2;
 			}
-			break;
+
+		}
+		break; }
 
 		case 'd': //Done
-			/*글자 다 삭제했을때 반응*/
 		{
+			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
+
 			line_num = std::stoi(answer_split[0]);
 			sequence_num = std::stoi(answer_split[1]);
 
-			if (line_num < 1 || line_num > 20) throw std::string("라인 20");  //RERE
+			if (line_num < 1 || line_num > line_idx.size()-1) throw std::string("라인 20");  //RERE
 			if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] < sequence_num) throw std::string("단어 인덱스 초과");  //RERE
 
 			eraseWord(line_num, sequence_num);
@@ -155,6 +201,8 @@ public:
 		}
 		case 'c': //Done
 		{
+			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
+
 			if (answer_split[0].size() > 75 || answer_split[1].size() > 75) throw std::string("단어 75");  //RERE
 
 			idx = searchWord(answer_split[0]);
@@ -169,18 +217,24 @@ public:
 			break;
 		}
 		case 'i'://Done
-	
 		{
 			line_num = std::stoi(answer_split[0]);
 			sequence_num = std::stoi(answer_split[1]);
-
-			if (line_num < 1 || line_num > 20) throw std::string("라인 20");  //RERE
-			if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] + 1 < sequence_num) throw std::string("단어 인덱스 초과");  //RERE
-			if (answer_split[2].size() > 75)throw std::string("단어 75");  //RERE
-			insertWord(line_num, sequence_num, answer_split[2]);
-			if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
-			page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
-			break;
+			if (line_idx.size() == 0) {
+				if (line_num != 1 || sequence_num != 1) {
+					throw std::string("인자 확인");
+				}
+			}
+			else {
+				if (line_num < 1 || line_num > line_idx.size() - 1) throw std::string("라인 20");  //RERE
+				if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] + 1 < sequence_num) throw std::string("단어 인덱스 초과");  //RERE
+				if (answer_split[2].size() > 75)throw std::string("단어 75");  //RERE
+			}
+				insertWord(line_num, sequence_num, answer_split[2]);
+				if (page_idx.size() > now_page_idx + 1) page_idx.erase(page_idx.begin() + now_page_idx + 1);
+				page_idx.insert(page_idx.begin() + now_page_idx + 1, print_text(textbook->text, page_idx[now_page_idx]));
+				break;
+			
 		}
 
 		default:
@@ -189,12 +243,13 @@ public:
 		return 1;
 	}
 
-
-	int print_text(std::vector<std::string> text, int now) {
-
-		int line_num = 0;
-
+	void set_page_and_line(std::vector<std::string> text, int now) {
 		if (now == -1) {
+
+			if (now_page_idx >= 2 && page_idx[now_page_idx - 2] == -1) {
+				page_idx.erase(page_idx.begin() + now_page_idx - 2);
+				now_page_idx--;
+			}
 
 			if (page_idx[now_page_idx - 1] == 0) {
 				now_page_idx = 0;
@@ -202,7 +257,7 @@ public:
 				page_idx.clear();
 				line_idx = check_nextline_idx(text, 0);
 				page_idx.push_back(0);
-				page_idx.insert(page_idx.begin() + now_page_idx + 1, check_nextline_idx(text, 0)[20]);
+				page_idx.insert(page_idx.begin() + now_page_idx + 1, line_idx[line_idx.size() - 1]);
 
 			}
 			else {
@@ -210,14 +265,20 @@ public:
 				page_idx.insert(page_idx.begin() + now_page_idx + 1, line_idx[0]);
 				page_idx.erase(page_idx.begin() + now_page_idx - 1);
 			}
-
 		}
 		else {
 			line_idx = check_nextline_idx(text, now);
-
 		}
+	}
 
-		for (int i = line_idx[0]; i < text.size() && line_num <= 20; i++) {
+	int print_text(std::vector<std::string> text, int now) {
+
+
+		if (textbook->text.size() == 0) return -1;
+
+		set_page_and_line(text, now);
+
+		for (int i = line_idx[0], line_num = 0; i < text.size() && line_num <= 20; i++) {
 
 			if (i == line_idx[line_num]) { //next line
 				if (++line_num > 20) break;
@@ -230,7 +291,8 @@ public:
 
 		std::cout << std::endl << "----------------------------------------------------------------------------------";
 
-		return line_idx[20];
+
+		return line_idx[line_idx.size()-1];
 	}
 
 	std::vector<int> check_prevline_idx(std::vector<std::string> text, int prev_line_before_change, int now_line_before_change, int next_line_after_change) {
@@ -264,6 +326,7 @@ public:
 		int line_char_total = 0;
 		int i = now;
 
+
 		for (; i < text.size() && line_idx_temp.size() <= 20; i++) {
 
 			if (line_char_total == 0 || line_char_total + 1 + text[i].size() > 75) { //next line
@@ -281,10 +344,12 @@ public:
 
 		}
 
-		if (line_idx_temp.size() < 20) {
-
+		if (now_page_idx >0 && line_idx_temp.size() < 20) {
+			
 			int size = line_idx_temp.size();
+
 			for (int i = 0; i < 20 - size; i++) {
+
 				line_idx_temp.insert(line_idx_temp.begin(), line_idx[19 - i]);
 			}
 		}
@@ -454,7 +519,8 @@ private:
 	}
 
 	void insertWord(int line, int idx, std::string word) {
-		textbook->text.insert(textbook->text.begin() + line_idx[line - 1] + (idx - 1), word);
+		if(line_idx.size()==0) textbook->text.insert(textbook->text.begin(), word);
+		else textbook->text.insert(textbook->text.begin() + line_idx[line - 1] + (idx - 1), word);
 	}
 
 	void eraseWord(int line, int idx) {
@@ -517,10 +583,11 @@ private:
 
 int main() {
 
-	TextBook* book = new TextBook("test.txt");
+	TextBook* book = new TextBook("original_test.txt");
 	TextEditor* textEditor = new TextEditor(book);
 
 	textEditor->run();
 
 	return 0;
 }
+
