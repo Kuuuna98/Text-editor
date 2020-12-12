@@ -113,7 +113,7 @@ public:
 			if (textbook->text.size() == 0) throw std::string("비어있는 텍스트파일입니다.");
 
 			if (page_idx[now_page_idx] == 0) {
-			call("This is the first page!");
+				throw std::string("This is the first page!");
 		}
 		else {
 			now_page_idx--;
@@ -583,7 +583,7 @@ private:
 
 int main() {
 
-	TextBook* book = new TextBook("original_test.txt");
+	TextBook* book = new TextBook("test2.txt");
 	TextEditor* textEditor = new TextEditor(book);
 
 	textEditor->run();
