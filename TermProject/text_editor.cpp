@@ -382,6 +382,7 @@ private:
 
 		switch (keyword)
 		{
+		case ' ': throw std::string("키워드 입력 전 공백이 오면 안됩니다.");
 		case 'n':
 		case 'p':
 		case 't':
@@ -583,7 +584,7 @@ private:
 
 int main() {
 
-	TextBook* book = new TextBook("original_test.txt");
+	TextBook* book = new TextBook("test2.txt");
 	TextEditor* textEditor = new TextEditor(book);
 
 	textEditor->run();
