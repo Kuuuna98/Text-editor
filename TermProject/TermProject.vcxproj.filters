@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="text_editor.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -39,6 +36,9 @@
       <Filter>소스 파일</Filter>
     </ClInclude>
     <ClInclude Include="WordVector.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorManagement.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>

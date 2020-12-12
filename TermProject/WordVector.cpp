@@ -1,4 +1,5 @@
 #include "WordVector.h"
+#include "ErrorManagement.h"
 #include <sstream>
 #include <fstream>
 
@@ -12,7 +13,7 @@ void WordVector::splitWord(std::string text_temp) {
 	std::istringstream ss(text_temp);
 
 	while (getline(ss, stringBuffer, ' ')) {
-		if (stringBuffer.size() > 75) throw std::string("텍스트 안에 75byte가 넘는 단어가 있습니다.");
+		if (stringBuffer.size() > 75) throw std::string(ERR_MSG_FILE_WORD_OVER);
 		text.push_back(stringBuffer);
 	}
 }

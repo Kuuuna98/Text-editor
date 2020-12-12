@@ -1,5 +1,6 @@
 #include <sstream>
 #include <fstream>
+#include "ErrorManagement.h"
 #include "TextBook.h"
 
 
@@ -13,7 +14,7 @@ std::string TextBook::loadFile(std::string text_file_name) {
 		getline(in, text_temp);
 
 	}
-	else throw std::string("Unable to open file");
+	else throw std::string(ERR_MSG_FILE_NOT_FOUND);
 	in.close();
 
 	return text_temp;
@@ -30,6 +31,6 @@ void TextBook::writeFile(std::string text_file_name, std::vector<std::string> te
 	if (out.is_open()) {
 		out.write(text_file.c_str(), text_file.size());
 	}
-	else throw std::string("Unable to open file");
+	else throw std::string(ERR_MSG_FILE_NOT_FOUND);
 	out.close();
 }

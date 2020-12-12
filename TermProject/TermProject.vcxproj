@@ -142,12 +142,10 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TextBook.cpp" />
     <ClCompile Include="TextEditor.cpp" />
-    <ClCompile Include="text_editor.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="WordVector.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ErrorManagement.h" />
     <ClInclude Include="TextBook.h" />
     <ClInclude Include="TextEditor.h" />
     <ClInclude Include="WordVector.h" />

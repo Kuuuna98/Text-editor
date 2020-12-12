@@ -9,6 +9,9 @@ int main() {
 	catch (std::string s) {
 		std::cout << s << std::endl;
 	}
+	catch (...) {
+		std::cout << "¿À·ù";
+	}
 
 	return 0;
 }
