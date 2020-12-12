@@ -8,13 +8,15 @@ TextEditor::TextEditor(std::string file_name) {
 	book = new TextBook();
 	WordVector::instance()->splitWord(book->loadFile(text_file_name));
 	now_page_idx = 0;
-	page_idx.push_back(0);
+	now_page_line_idx = 0;
+	line_idx.clear();
 
 	if (WordVector::instance()->get_text_list().size() > 0) {
-
-		now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
-
-		print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+		line_idx_init(WordVector::instance()->get_text_list(),0);
+		for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
+			line_idx.push_back(all_line_idx[i]);
+		}
+		print_text(WordVector::instance()->get_text_list());
 	}
 
 }
@@ -43,40 +45,53 @@ int TextEditor::call(std::string consol_msg = "") {
 
 	int idx = 0, line_num = 0, sequence_num = 0;
 	std::vector<std::string> answer_split = keyword_check(answer);
+	std::vector<int> temp_line_idx;
 
 	switch (answer.front())
 	{
 	case 'n':
 
 		if (WordVector::instance()->get_text_list().size() == 0) throw std::string(ERR_MSG_SIZE_ZERO);
-		if (page_idx[now_page_idx + 1] >= WordVector::instance()->get_text_list().size()) throw std::string(ERR_MSG_LAST_PAGE);
-		if (page_idx[now_page_idx] == 0) now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+		if (now_page_line_idx + 20 >= all_line_idx.size()-1) throw std::string(ERR_MSG_LAST_PAGE);
 
-		now_page_idx++;		
-		idx = print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
-		if (page_idx[now_page_idx + 1] >= WordVector::instance()->get_text_list().size()) {
-			page_idx.erase(page_idx.begin()+ now_page_idx);
-			page_idx.insert(page_idx.begin()+ now_page_idx,idx);
+		line_idx.clear();
+		now_page_line_idx += 20;
+
+		if ((now_page_line_idx + 19) > (all_line_idx.size() - 1)) {
+			int i = all_line_idx.size() - 1;
+			for (; i >= 0 && line_idx.size() < 21; i--) {
+				line_idx.insert(line_idx.begin(), all_line_idx[i]);
+			}
+			now_page_line_idx = i+1;
 		}
+		else {
+			for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
+				line_idx.push_back(all_line_idx[i]);
+			}
+		}
+
+		print_text(WordVector::instance()->get_text_list());
+
 		break; 
 
 	case 'p':
 		if (WordVector::instance()->get_text_list().size() == 0) throw std::string(ERR_MSG_SIZE_ZERO);
-		if (page_idx[now_page_idx] == 0) throw std::string(ERR_MSG_FIRST_PAGE);
-		if (page_idx[now_page_idx + 1] >= WordVector::instance()->get_text_list().size()) now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+		if (all_line_idx[now_page_line_idx] == 0) throw std::string(ERR_MSG_FIRST_PAGE);
 
-		for (auto v : page_idx) {
-			std::cout << " " << v;
+		line_idx.clear();
+		now_page_line_idx -= 20;
+
+		if (now_page_line_idx < 0 || all_line_idx[now_page_line_idx] == 0) {
+			line_idx_init(WordVector::instance()->get_text_list(), 0);
+			now_page_line_idx = 0;
 		}
-		std::cout << std::endl;
 
-		now_page_idx--;
-		print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);	
-
-		for (auto v : page_idx) {
-			std::cout << " " << v;
+		for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
+			line_idx.push_back(all_line_idx[i]);
 		}
-		std::cout << std::endl;
+		
+		print_text(WordVector::instance()->get_text_list());
+	
 		break; 
 
 	case 't':
@@ -93,16 +108,24 @@ int TextEditor::call(std::string consol_msg = "") {
 			throw std::string(ERR_MSG_WORD_NOT_FOUND);
 		}
 		else {
-			std::cout << std::endl<< now_page_idx <<" "<< page_idx[986]<<" 이전: ";
-			for (auto v : page_idx) {
-				std::cout << " "<<v;
-			}
-			std::cout << std::endl;
 
-			now_page_idx = search_set_page_and_line(WordVector::instance()->get_text_list(), idx);
-			print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+			std::vector<int> temp = search_prev_line_idx(WordVector::instance()->get_text_list(), idx);
+			line_idx_init(WordVector::instance()->get_text_list(), idx);
+			now_page_line_idx = 0;
+
+			for (int i = temp.size() - 1; i >= 0; i--) {
+				now_page_line_idx++;
+				all_line_idx.insert(all_line_idx.begin(), temp[i]);
+			}
+
+			line_idx.clear();
+			for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
+				line_idx.push_back(all_line_idx[i]);
+			}
+
+			print_text(WordVector::instance()->get_text_list());
 		}
-		now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+
 		break; 
 
 	case 'd':
@@ -116,9 +139,20 @@ int TextEditor::call(std::string consol_msg = "") {
 		if (1 > sequence_num || line_idx[line_num] - line_idx[line_num - 1] < sequence_num) throw std::string(ERR_MSG_WORD_INDEX_OVER);
 
 		eraseWord(line_num, sequence_num);
+		idx = now_page_line_idx;
+		for (; idx < all_line_idx.size(); idx++) {
+			if (line_idx[line_num-1] == all_line_idx[idx]) break;
+		}
 
-		now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
-		print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+		temp_line_idx = all_line_idx;
+		line_idx_init(WordVector::instance()->get_text_list(), line_idx[line_num-1]);
+
+
+		for (int j = idx-1; j >= 0;j--) {all_line_idx.insert(all_line_idx.begin(), temp_line_idx[j]);}
+
+		for (int j = line_num-1; j < line_idx.size(); j++, idx++) {line_idx[j] = all_line_idx[idx];}
+
+		print_text(WordVector::instance()->get_text_list());
 
 		break;
 	
@@ -133,18 +167,20 @@ int TextEditor::call(std::string consol_msg = "") {
 		}
 
 		changeWord(answer_split[0], answer_split[1]);
-		now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), 0);
-		print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
+
+		line_idx_init(WordVector::instance()->get_text_list(),0);
+		now_page_line_idx = 0;
+
+		line_idx.clear();
+		for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
+			line_idx.push_back(all_line_idx[i]);
+		}
+
+		print_text(WordVector::instance()->get_text_list());
 
 		break;
 
 	case 'i':
-
-		std::cout << std::endl << now_page_idx << " 이전iiii: ";
-		for (auto v : page_idx) {
-			std::cout << " " << v;
-		}
-		std::cout << std::endl;
 
 		line_num = std::stoi(answer_split[0]);
 		sequence_num = std::stoi(answer_split[1]);
@@ -159,20 +195,18 @@ int TextEditor::call(std::string consol_msg = "") {
 			if (answer_split[2].size() > 75)throw std::string(ERR_MSG_WORD_OVER); 
 		}
 		insertWord(line_num, sequence_num, answer_split[2]);
-
-		now_page_idx = set_page_and_line(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
-		std::cout << std::endl << now_page_idx << " 이후iiii: ";
-		for (auto v : page_idx) {
-			std::cout << " " << v;
+		idx = now_page_line_idx;
+		for (; idx < all_line_idx.size(); idx++) {
+			if (line_idx[line_num - 1] == all_line_idx[idx]) break;
 		}
-		std::cout << std::endl;
-		print_text(WordVector::instance()->get_text_list(), page_idx[now_page_idx]);
 
-		std::cout << std::endl << now_page_idx << " 이끝iiii: ";
-		for (auto v : page_idx) {
-			std::cout << " " << v;
-		}
-		std::cout << std::endl;
+		temp_line_idx = all_line_idx;
+		line_idx_init(WordVector::instance()->get_text_list(), line_idx[line_num - 1]);
+
+		for (int j = idx - 1; j >= 0; j--) { all_line_idx.insert(all_line_idx.begin(), temp_line_idx[j]); }
+		for (int j = line_num - 1; j < line_idx.size(); j++, idx++) { line_idx[j] = all_line_idx[idx]; }
+
+		print_text(WordVector::instance()->get_text_list());
 
 		break;
 
@@ -180,150 +214,6 @@ int TextEditor::call(std::string consol_msg = "") {
 		break;
 	}
 	return 1;
-}
-
-int TextEditor::set_page_and_line(std::vector<std::string> text, int now) {
-	int idx_temp=now;
-	std::vector<int> line_idx_temp;
-	int temp_now_page_idx = 0;
-
-	page_idx.clear();
-	page_idx.push_back(now);
-
-	//이전페이지
-	while (idx_temp > 0) {
-		temp_now_page_idx++;
-		idx_temp = check_prevline_idx(text, idx_temp)[0];
-		page_idx.insert(page_idx.begin(),idx_temp);
-	}
-
-	idx_temp = now;
-	//다음페이지
-	while (idx_temp < WordVector::instance()->get_text_list().size()) {
-		line_idx_temp = check_nextline_idx(text, idx_temp);
-		if (idx_temp == now) line_idx = line_idx_temp;
-		idx_temp = line_idx_temp[line_idx_temp.size()-1];
-		if (idx_temp == WordVector::instance()->get_text_list().size()) {
-			page_idx.pop_back();
-			page_idx.push_back(line_idx_temp[0]);
-		}
-		page_idx.push_back(idx_temp);
-	}
-
-	return temp_now_page_idx;
-}
-int TextEditor::search_set_page_and_line(std::vector<std::string> text, int now) {
-	int temp_now_page_idx = 0;
-	std::vector<int> line_idx_temp;
-	int page_total = 1;
-	int line_char_total = 0;
-	int idx_temp = now;
-
-	line_idx_temp = check_line_idx(text, now);
-
-	if (line_idx_temp.size() < 20) {
-		page_idx.clear();
-		page_idx.push_back(now);
-
-		//이전페이지
-		while (idx_temp > 0) {
-			temp_now_page_idx++;
-			idx_temp = check_prevline_idx(text, idx_temp)[0];
-			page_idx.insert(page_idx.begin(), idx_temp);
-		}
-		line_idx = line_idx_temp;
-		page_idx.push_back(line_idx[line_idx.size()-1]);
-		return temp_now_page_idx;
-	}
-	else {
-		return set_page_and_line(text, now);
-	}
-
-}
-
-std::vector<int> TextEditor::check_prevline_idx(std::vector<std::string> text, int next) {
-
-	std::vector<int> line_idx_temp;
-	int page_total = 1;
-	int line_char_total = 0;
-	int i = next-1;
-
-	for (; i >= 0 && line_idx_temp.size() < 20; i--) {
-
-		if (line_char_total + 1 + text[i].size() > 75) { //next line
-
-			if(line_char_total + text[i].size() == 75) {
-				line_char_total = 0;
-				line_idx_temp.insert(line_idx_temp.begin(), i);
-			}
-			else {
-				line_char_total = text[i].size();
-				line_idx_temp.insert(line_idx_temp.begin(), i+1);
-			}
-		}
-		else {
-			line_char_total += 1 + text[i].size();
-		}
-
-	}
-
-	if (i < 0) {
-		line_idx_temp = check_nextline_idx(text, 0);
-	}
-	else {
-		line_idx_temp.push_back(next);
-	}
-
-	std::cout << next << "prev line_idx_temp: ";
-	for (auto v : line_idx_temp) {
-		std::cout << " " << v;
-	}
-	std::cout << std::endl;
-
-	return line_idx_temp;
-}
-std::vector<int> TextEditor::check_nextline_idx(std::vector<std::string> text, int now) {
-	std::vector<int> line_idx_temp;
-	int page_total = 1;
-	int line_char_total = 0;
-	int i = now;
-	std::vector<int> line_idx_init = check_line_idx(text, 0);
-
-	if (line_idx_init[line_idx_init.size() - 1] == WordVector::instance()->get_text_list().size()) {
-		return line_idx_init;
-	}
-
-	for (; i < text.size() && line_idx_temp.size() <= 20; i++) {
-
-		if (line_char_total == 0 || line_char_total + 1 + text[i].size() > 75) { //next line
-
-			if (line_idx_temp.size() == 20) {
-				break;
-			}
-
-			line_char_total = text[i].size();
-			line_idx_temp.push_back(i);
-		}
-		else {
-			line_char_total += 1 + text[i].size();
-		}
-
-	}
-
-
-	if (line_idx_temp [0]!=0&& line_idx_temp.size() < 20) {
-		
-		std::vector<int> prev_line_idx_temp = check_nextline_idx(text, page_idx[page_idx.size()-2]);
-
-		int target = prev_line_idx_temp.size() - (1 + 20 - line_idx_temp.size());
-		for (int j = prev_line_idx_temp.size() - 2; j >= target;j--) {
-			line_idx_temp.insert(line_idx_temp.begin(), prev_line_idx_temp[j]);
-		}
-	}
-
-	line_idx_temp.push_back(i);
-
-	return line_idx_temp;
 }
 
 std::vector<int> TextEditor::check_line_idx(std::vector<std::string> text, int now) {
@@ -355,26 +245,120 @@ std::vector<int> TextEditor::check_line_idx(std::vector<std::string> text, int n
 	return line_idx_temp;
 }
 
-int TextEditor::print_text(std::vector<std::string> text, int now) {
+std::vector<int> TextEditor::search_prev_line_idx(std::vector<std::string> text, int idx) {
 
-	if (WordVector::instance()->get_text_list().size() == 0) return -1;
-	line_idx = check_line_idx(text, now);
+	std::vector<int> temp_search_line_idx;
+	int line_char_total;
+	int target_line_idx = 0;
 
-	for (int i = line_idx[0], line_num = 0; i < text.size() && line_num <= 20; i++) {
 
-		if (i == line_idx[line_num]) { //next line
-			if (++line_num > 20) break;
-
-			if (line_num < 10) std::cout << std::endl << ' ' << line_num << "|";
-			else std::cout << std::endl << line_num << "|";
+	for (; target_line_idx < all_line_idx.size(); target_line_idx++) {
+		if (idx < all_line_idx[target_line_idx]) {
+			target_line_idx--;
+			break;
 		}
-		std::cout << ' ' << text[i];
+	}
+
+
+
+	int last_idx = idx;
+	line_char_total = 0;
+
+
+
+	while (target_line_idx >= 0) {
+	for (int i = all_line_idx[target_line_idx]; i < last_idx; i++) {
+		if (line_char_total + text[i].size() == 75) {
+			temp_search_line_idx.insert(temp_search_line_idx.begin(), i);
+			line_char_total = 0;
+		}
+		else if (line_char_total + text[i].size() > 75) {
+			temp_search_line_idx.insert(temp_search_line_idx.begin(), i + 1);
+			line_char_total = text[i].size();
+		}
+		else {
+			line_char_total += 1 + text[i].size();
+		}
+	}
+
+	//if (line_char_total == 0)break;
+	last_idx = all_line_idx[target_line_idx] - 1;
+	target_line_idx--;
+	}
+
+	if (target_line_idx < 0 && (temp_search_line_idx.size()==0 || temp_search_line_idx[0]!=0)) {
+		temp_search_line_idx.insert(temp_search_line_idx.begin(), 0);
+	}
+
+	return temp_search_line_idx;
+	
+}
+
+void TextEditor::line_idx_init(std::vector<std::string> text, int st_idx) {
+	all_line_idx.clear();
+
+	int line_char_total = 0;
+	int i = st_idx;
+
+	for (; i < text.size(); i++) {
+		if (line_char_total == 0 || line_char_total + 1 + text[i].size() > 75) {
+			line_char_total = text[i].size();
+			all_line_idx.push_back(i);
+		}
+		else {
+			line_char_total += 1 + text[i].size();
+		}
+	}
+	all_line_idx.push_back(i);
+}
+
+std::vector<int> TextEditor::line_idx_search(std::vector<std::string> text, int st_idx, int target_idx) {
+	
+	std::vector<int> temp_line_idx;
+	int line_char_total = 0;
+	int i = st_idx;
+
+	for (; i < target_idx; i++) {
+		if (line_char_total == 0 || line_char_total + 1 + text[i].size() > 75) {
+			line_char_total = text[i].size();
+			temp_line_idx.push_back(i);
+		}
+		else {
+			line_char_total += 1 + text[i].size();
+		}
+	}
+	return temp_line_idx;
+}
+
+void TextEditor::page_idx_init(std::vector<std::string> text) {
+	//page_idx.clear();
+
+	//for (; i+20 < all_line_idx.size() ; i=i+20) {
+	//	page_idx.push_back(all_line_idx[i]);
+	//}
+
+	//all_line_idx.push_back(all_line_idx[i]);
+}
+
+
+
+
+void TextEditor::print_text(std::vector<std::string> text) {
+
+	if (WordVector::instance()->get_text_list().size() == 0) return ;
+	//line_idx = check_line_idx(text, now);
+
+	for (int i = 0, line_num = 1; i < line_idx.size() && line_num <= 20; i++, line_num++) {
+		
+		if (line_num < 10) std::cout << std::endl << ' ' << line_num << "|";
+		else std::cout << std::endl << line_num << "|";
+
+		for (int j = line_idx[i]; j < line_idx[i+1]; j++) {
+			std::cout << ' ' << text[j];
+		}
 	}
 
 	std::cout << std::endl << "----------------------------------------------------------------------------------";
-
-
-	return line_idx[0];
 }
 
 
