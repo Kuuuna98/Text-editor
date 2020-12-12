@@ -21,8 +21,7 @@ public:
 	TextEditor(std::string text_file_name);
 	void run();
 	int call(std::string consol_msg);
-	void set_page_and_line(std::vector<std::string> text, int now);
-	std::vector<int> check_prevline_idx(std::vector<std::string> text, int prev_line_before_change, int now_line_before_change, int next_line_after_change);
+	int set_page_and_line(std::vector<std::string> text, int now);
 	std::vector<int> check_prevline_idx(std::vector<std::string> text, int next);
 	std::vector<int> check_nextline_idx(std::vector<std::string> text, int now);
 
@@ -34,6 +33,5 @@ private:
 	void eraseWord(int line, int idx);
 	void changeWord(std::string beforeWord, std::string afterWord);
 	int searchWord(std::string word);
-	void fileWrite();
 	std::string menu(std::string consol);
 };
