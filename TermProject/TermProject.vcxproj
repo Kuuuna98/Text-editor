@@ -139,7 +139,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="text_editor.cpp" />
+    <ClCompile Include="FileSetting.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="TextBook.cpp" />
+    <ClCompile Include="TextEditor.cpp" />
+    <ClCompile Include="text_editor.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="WordVector.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FileSetting.h" />
+    <ClInclude Include="TextBook.h" />
+    <ClInclude Include="TextEditor.h" />
+    <ClInclude Include="WordVector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
