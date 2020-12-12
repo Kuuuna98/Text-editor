@@ -139,7 +139,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FileSetting.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="TextBook.cpp" />
     <ClCompile Include="TextEditor.cpp" />
@@ -149,7 +148,6 @@
     <ClCompile Include="WordVector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FileSetting.h" />
     <ClInclude Include="TextBook.h" />
     <ClInclude Include="TextEditor.h" />
     <ClInclude Include="WordVector.h" />

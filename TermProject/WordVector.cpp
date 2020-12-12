@@ -12,6 +12,7 @@ void WordVector::splitWord(std::string text_temp) {
 	std::istringstream ss(text_temp);
 
 	while (getline(ss, stringBuffer, ' ')) {
+		if (stringBuffer.size() > 75) throw std::string("텍스트 안에 75byte가 넘는 단어가 있습니다.");
 		text.push_back(stringBuffer);
 	}
 }
@@ -21,5 +22,4 @@ WordVector* WordVector::instance() {
 	}
 	return s_instance;
 }
-std::string* text_file_name = 0;
 WordVector* WordVector::s_instance = 0;

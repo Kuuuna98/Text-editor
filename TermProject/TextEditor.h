@@ -5,13 +5,17 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include "TextBook.h"
+
 
 class TextEditor {
 
 private:
+	TextBook* book;
 	std::vector<int> page_idx;
 	std::vector<int> line_idx;
 	int now_page_idx = 0;
+	std::string text_file_name;
 
 public:
 	TextEditor(std::string text_file_name);
@@ -19,6 +23,7 @@ public:
 	int call(std::string consol_msg);
 	void set_page_and_line(std::vector<std::string> text, int now);
 	std::vector<int> check_prevline_idx(std::vector<std::string> text, int prev_line_before_change, int now_line_before_change, int next_line_after_change);
+	std::vector<int> check_prevline_idx(std::vector<std::string> text, int next);
 	std::vector<int> check_nextline_idx(std::vector<std::string> text, int now);
 
 private:
