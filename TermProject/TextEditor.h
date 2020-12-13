@@ -4,7 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <sstream>
 #include "TextBook.h"
 
 
@@ -12,7 +11,6 @@ class TextEditor {
 
 private:
 	TextBook* book;
-	std::vector<int> all_line_idx;
 	std::vector<int> line_idx;
 	int now_page_line_idx = 0;
 	std::string text_file_name;
@@ -33,8 +31,12 @@ private:
 	std::string getInvalidInputMSG(bool follow, char keyword);
 	std::vector<std::string> keyword_check(std::string answer);
 
-	void insertWord(int line, int idx, std::string word);
-	void eraseWord(int line, int idx);
-	void changeWord(std::string beforeWord, std::string afterWord);
-	int searchWord(std::string word);
+	void insertEdit(std::vector<std::string> answer_split);
+	void eraseEdit(std::vector<std::string> answer_split);
+	void changeEdit(std::vector<std::string> answer_split);
+	void searchEdit(std::vector<std::string> answer_split);
+	void nextPage(std::vector<std::string> answer_split);
+	void prevPage(std::vector<std::string> answer_split);
+
 };
+
