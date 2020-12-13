@@ -3,7 +3,7 @@
 #include <sstream>
 #include <fstream>
 
-std::vector<std::string>& WordVector::get_text_list() {
+std::vector<std::string>& WordVector::getTextList() {
 	return text;
 }
 

@@ -12,7 +12,7 @@ private:
 	static WordVector* s_instance;
 public:
 	void splitWord(std::string text_temp);
-	std::vector<std::string>& get_text_list();
+	std::vector<std::string>& getTextList();
 	static WordVector* instance();
 
 };
