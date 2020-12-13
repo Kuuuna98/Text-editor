@@ -24,10 +24,10 @@ public:
 private:
 	int call(std::string consol_msg);
 	
-	void line_idx_init(std::vector<std::string> text, int st_idx);
-	std::vector<int>  search_prev_line_idx(std::vector<std::string> text, int idx);
+	void lineIdxInit(std::vector<std::string> text, int st_idx);
+	std::vector<int>  searchPrevLineIdx(std::vector<std::string> text, int idx);
 
-	void print_text(std::vector<std::string> text);
+	void printText(std::vector<std::string> text);
 	std::string menu(std::string consol);
 
 	std::string getInvalidInputMSG(bool follow, char keyword);

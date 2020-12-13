@@ -3,6 +3,8 @@
 #include <sstream>
 #include <fstream>
 
+WordVector::WordVector() {}
+
 std::vector<std::string>& WordVector::getTextList() {
 	return text;
 }
@@ -19,7 +21,7 @@ void WordVector::splitWord(std::string text_temp) {
 }
 WordVector* WordVector::instance() {
 	if (!s_instance) {
-		s_instance = new WordVector;
+		s_instance = new WordVector();
 	}
 	return s_instance;
 }

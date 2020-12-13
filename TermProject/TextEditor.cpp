@@ -7,15 +7,16 @@ TextEditor::TextEditor(std::string file_name) {
 	text_file_name = file_name;
 	book = new TextBook();
 	WordVector::instance()->splitWord(book->loadFile(text_file_name));
+	
 	now_page_line_idx = 0;
 	line_idx.clear();
 
 	if (WordVector::instance()->getTextList().size() > 0) {
-		line_idx_init(WordVector::instance()->getTextList(),0);
+		lineIdxInit(WordVector::instance()->getTextList(),0);
 		for (int i = now_page_line_idx; i < all_line_idx.size() && line_idx.size() < 21; i++) {
 			line_idx.push_back(all_line_idx[i]);
 		}
-		print_text(WordVector::instance()->getTextList());
+		printText(WordVector::instance()->getTextList());
 	}
 
 }
@@ -68,7 +69,7 @@ int TextEditor::call(std::string consol_msg = "") {
 			}
 		}
 
-		print_text(WordVector::instance()->getTextList());
+		printText(WordVector::instance()->getTextList());
 
 		break; 
 
@@ -80,7 +81,7 @@ int TextEditor::call(std::string consol_msg = "") {
 		now_page_line_idx -= 20;
 
 		if (now_page_line_idx < 0 || all_line_idx[now_page_line_idx] == 0) {
-			line_idx_init(WordVector::instance()->getTextList(), 0);
+			lineIdxInit(WordVector::instance()->getTextList(), 0);
 			now_page_line_idx = 0;
 		}
 
@@ -88,7 +89,7 @@ int TextEditor::call(std::string consol_msg = "") {
 			line_idx.push_back(all_line_idx[i]);
 		}
 		
-		print_text(WordVector::instance()->getTextList());
+		printText(WordVector::instance()->getTextList());
 	
 		break; 
 
@@ -107,9 +108,9 @@ int TextEditor::call(std::string consol_msg = "") {
 		}
 		else {
 
-			std::vector<int> temp = search_prev_line_idx(WordVector::instance()->getTextList(), idx);
+			std::vector<int> temp = searchPrevLineIdx(WordVector::instance()->getTextList(), idx);
 
-			line_idx_init(WordVector::instance()->getTextList(), idx);
+			lineIdxInit(WordVector::instance()->getTextList(), idx);
 			now_page_line_idx = 0;
 
 			for (int i = temp.size() - 1; i >= 0; i--) {
@@ -122,7 +123,7 @@ int TextEditor::call(std::string consol_msg = "") {
 				line_idx.push_back(all_line_idx[i]);
 			}
 
-			print_text(WordVector::instance()->getTextList());
+			printText(WordVector::instance()->getTextList());
 		}
 
 		break; 
@@ -152,14 +153,14 @@ int TextEditor::call(std::string consol_msg = "") {
 			}
 
 			temp_line_idx = all_line_idx;
-			line_idx_init(WordVector::instance()->getTextList(), line_idx[line_num - 1]);
+			lineIdxInit(WordVector::instance()->getTextList(), line_idx[line_num - 1]);
 
 
 			for (int j = idx - 1; j >= 0; j--) { all_line_idx.insert(all_line_idx.begin(), temp_line_idx[j]); }
 
 			for (int j = line_num - 1; j < line_idx.size(); j++, idx++) { line_idx[j] = all_line_idx[idx]; }
 		}
-		print_text(WordVector::instance()->getTextList());
+		printText(WordVector::instance()->getTextList());
 		break;
 	
 	case 'c': 
@@ -174,7 +175,7 @@ int TextEditor::call(std::string consol_msg = "") {
 
 		changeWord(answer_split[0], answer_split[1]);
 
-		line_idx_init(WordVector::instance()->getTextList(),0);
+		lineIdxInit(WordVector::instance()->getTextList(),0);
 		now_page_line_idx = 0;
 
 		line_idx.clear();
@@ -182,7 +183,7 @@ int TextEditor::call(std::string consol_msg = "") {
 			line_idx.push_back(all_line_idx[i]);
 		}
 
-		print_text(WordVector::instance()->getTextList());
+		printText(WordVector::instance()->getTextList());
 
 		break;
 
@@ -206,7 +207,7 @@ int TextEditor::call(std::string consol_msg = "") {
 				all_line_idx.push_back(1);
 				now_page_line_idx = 0;
 
-				print_text(WordVector::instance()->getTextList());
+				printText(WordVector::instance()->getTextList());
 			}
 		}
 		else {
@@ -221,17 +222,14 @@ int TextEditor::call(std::string consol_msg = "") {
 			}
 
 			temp_line_idx = all_line_idx;
-			line_idx_init(WordVector::instance()->getTextList(), line_idx[line_num - 1]);
+			lineIdxInit(WordVector::instance()->getTextList(), line_idx[line_num - 1]);
 
 			for (int j = idx - 1; j >= 0; j--) { all_line_idx.insert(all_line_idx.begin(), temp_line_idx[j]); }
 			for (int j = line_num - 1; j < line_idx.size(); j++, idx++) { line_idx[j] = all_line_idx[idx]; }
 
-			print_text(WordVector::instance()->getTextList());
+			printText(WordVector::instance()->getTextList());
 		}
 		break;
-
-		
-
 	default:
 		break;
 	}
@@ -239,7 +237,7 @@ int TextEditor::call(std::string consol_msg = "") {
 }
 
 
-std::vector<int> TextEditor::search_prev_line_idx(std::vector<std::string> text, int idx) {
+std::vector<int> TextEditor::searchPrevLineIdx(std::vector<std::string> text, int idx) {
 
 	std::vector<int> temp_search_line_idx;
 	int now_line_char_total=0, prev_line_char_total=0;
@@ -313,7 +311,7 @@ std::vector<int> TextEditor::search_prev_line_idx(std::vector<std::string> text,
 	
 }
 
-void TextEditor::line_idx_init(std::vector<std::string> text, int st_idx) {
+void TextEditor::lineIdxInit(std::vector<std::string> text, int st_idx) {
 	all_line_idx.clear();
 
 	int line_char_total = 0;
@@ -332,7 +330,7 @@ void TextEditor::line_idx_init(std::vector<std::string> text, int st_idx) {
 }
 
 
-void TextEditor::print_text(std::vector<std::string> text) {
+void TextEditor::printText(std::vector<std::string> text) {
 
 	if (WordVector::instance()->getTextList().size() > 0) {
 

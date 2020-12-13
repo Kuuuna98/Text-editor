@@ -1,4 +1,3 @@
-#include "TextBook.h"
 #include "TextEditor.h"
 
 int main() {
@@ -10,7 +9,7 @@ int main() {
 		std::cout << s << std::endl;
 	}
 	catch (...) {
-		std::cout << "¿À·ù";
+		std::cout << "Error";
 	}
 
 	return 0;
