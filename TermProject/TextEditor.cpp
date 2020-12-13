@@ -507,7 +507,7 @@ void TextEditor::nextPage(std::vector<std::string> answer_split) {
 	line_idx.clear();
 	now_page_line_idx += 20;
 
-	if ((now_page_line_idx + 19) > (WordVector::instance()->getAllLineIdx().size() - 1)) {
+	if ((now_page_line_idx + 20) > (WordVector::instance()->getAllLineIdx().size() - 1)) {
 		int i = WordVector::instance()->getAllLineIdx().size() - 1;
 		for (; i >= 0 && line_idx.size() < 21; i--) {
 			line_idx.insert(line_idx.begin(), WordVector::instance()->getAllLineIdx()[i]);
