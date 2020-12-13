@@ -7,7 +7,7 @@
 #define ERR_MSG_SIZE_ZERO "File has no content"
 #define ERR_MSG_WORD_OVER "Word over 75 bytes"
 #define ERR_MSG_WORD_INDEX_OVER "Word index exceeded"
-#define ERR_MSG_LINE_OVER "Line over 20 lines"
+#define ERR_MSG_LINE_OVER "Line index over this page lines"
 #define ERR_MSG_SPACE_KEYWORD "No spaces should come before inserting keywords"
 #define ERR_MSG_LAST_PAGE "This is the last page!"
 #define ERR_MSG_FIRST_PAGE "This is the first page!"
