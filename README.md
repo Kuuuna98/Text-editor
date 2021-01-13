@@ -1,5 +1,5 @@
 # Text Editor📑
-Implement a text editor-based console.
+Implemented a text editor-based console.
 ![0](https://user-images.githubusercontent.com/26339069/104284612-a365a380-54f5-11eb-8822-182f953ae7a9.png)
 ## Functional specification
 - Use design pattern **Singletone**.
